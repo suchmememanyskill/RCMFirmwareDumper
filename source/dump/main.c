@@ -143,10 +143,10 @@ void mainmenu(){
                 ret = messagebox(DUMPDONEMESSAGE);
 
             bpmp_clk_rate_set(BPMP_CLK_NORMAL);
-            if (ret == 1){
+            if (ret == 3)
+                launch_payload("bootloader/update.bin", 1);
+            if (ret == 2)
                 launch_payload("atmosphere/reboot_payload.bin", 1);
-
-            }
             reboot_rcm();
     }
     if (ret == 2){
@@ -156,5 +156,6 @@ void mainmenu(){
     else
         bpmp_clk_rate_set(BPMP_CLK_NORMAL);
         launch_payload("atmosphere/reboot_payload.bin", 0);
+        launch_payload("bootloader/update.bin", 0);
         reboot_rcm();
 }
