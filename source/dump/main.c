@@ -7,30 +7,77 @@
 #include "../utils/util.h"
 #include "../soc/bpmp.h"
 #include "main.h"
+#include "gfx.h"
 #include "external_utils.h"
 #include "../libs/fatfs/ff.h"
 
 extern bool sd_unmount();
 static u32 bis_keys[4][8];
 
-void clearscreen(){
-    gfx_clear_grey(0x1B);
-    gfx_con_setpos(0, 0);
-    gfx_box(0, 0, 719, 15, COLOR_WHITE);
-    gfx_printf("%k%pRCMFirmwareDumper - By SuchMemeManySkill\n%k%p", COLOR_DEFAULT, COLOR_WHITE, COLOR_WHITE, COLOR_DEFAULT);
+menu_item mainmenu[] = {
+    {"-- RCMFIRMWAREDUMPER --\n", COLOR_VIOLET, -1, 0},
+    {"Dump Firmware\n", COLOR_GREEN, 1, 1},
+    {"Reboot to Hekate", COLOR_BLUE, 2, 1},
+    {"Reboot to Atmosphere", COLOR_BLUE, 3, 1},
+    {"Reboot to RCM", COLOR_ORANGE, 4, 1},
+    {"Power off", COLOR_ORANGE, 5, 1}
+};
+
+menu_item exitmenu[] = {
+    {"[RESULT]", COLOR_WHITE, -1, 0},
+    {"Reboot to Hekate", COLOR_BLUE, 1, 1},
+    {"Reboot to Atmosphere", COLOR_BLUE, 2, 1},
+    {"Reboot to RCM", COLOR_ORANGE, 3, 1},
+    {"Power off", COLOR_ORANGE, 4, 1}
+};
+
+bool checkfile(char* path){
+    FRESULT fr;
+    FILINFO fno;
+
+    fr = f_stat(path, &fno);
+
+    if (fr & FR_NO_FILE)
+        return false;
+    else
+        return true;
 }
 
-int messagebox(char *message){
-    int ret = -1;
-    clearscreen();
-    gfx_printf("%s", message);
-    msleep(1000);
-    u8 res = btn_wait();
-        if (res & BTN_POWER) ret = 1;
-        else if (res & BTN_VOL_UP) ret = 2;
-        else ret = 3;
-    clearscreen();
-    return ret;
+void fillmainmenu(){
+    for (int i = 0; i < 5; i++)
+        switch (mainmenu[i].internal_function){
+            case 2:
+                if (!checkfile("/bootloader/update.bin"))
+                    mainmenu[i].property = -1;
+                break;
+            case 3:
+                if (!checkfile("/atmosphere/reboot_payload.bin"))
+                    mainmenu[i].property = -1;
+                break;
+        }
+}
+
+void fillexitmenu(bool passed){
+    if (passed){
+        strcpy(exitmenu[0].name, "Dump completed!\nDump is located in /Firmware\n\n");
+        exitmenu[0].color = COLOR_GREEN;
+    }
+    else {
+        strcpy(exitmenu[0].name, "Dump FAILED!\n\n");
+        exitmenu[0].color = COLOR_RED;
+    }
+
+    for (int i = 0; i < 4; i++)
+        switch (mainmenu[i].internal_function){
+            case 1:
+                if (!checkfile("/bootloader/update.bin"))
+                    mainmenu[i].property = -1;
+                break;
+            case 2:
+                if (!checkfile("/atmosphere/reboot_payload.bin"))
+                    mainmenu[i].property = -1;
+                break;
+        }
 }
 
 int copy(const char *src, const char *dst){
@@ -133,9 +180,58 @@ bool dumpfirmware(){
     return fail;
 }
 
-void mainmenu(){
+void dumpmenu(){
     int ret;
-    ret = messagebox(INFOMESSAGE);
+    //ret = messagebox(INFOMESSAGE);
+
+    fillmainmenu();
+
+    ret = makemenu(mainmenu, 6);
+
+    switch (ret){
+        case 1:
+            fillexitmenu(!dumpfirmware());
+
+            ret = makemenu(exitmenu, 5);
+
+            bpmp_clk_rate_set(BPMP_CLK_NORMAL);
+
+            switch (ret){
+                case 1:
+                    launch_payload("bootloader/update.bin", 0);
+                    break;
+                case 2:
+                    launch_payload("atmosphere/reboot_payload.bin", 0);
+                    break;
+                case 3:
+                    reboot_rcm();
+                    break;
+                case 4:
+                    power_off();
+                    break;
+            }
+
+            break;
+        
+        case 2:
+            bpmp_clk_rate_set(BPMP_CLK_NORMAL);
+            launch_payload("bootloader/update.bin", 0);
+            break;
+        case 3:
+            bpmp_clk_rate_set(BPMP_CLK_NORMAL);
+            launch_payload("atmosphere/reboot_payload.bin", 0);
+            break;
+        case 4:
+            bpmp_clk_rate_set(BPMP_CLK_NORMAL);
+            reboot_rcm();
+            break;
+        case 5:
+            bpmp_clk_rate_set(BPMP_CLK_NORMAL);
+            power_off();
+            break;
+    }
+    /*
+
     if (ret == 1){
             if (dumpfirmware())
                 ret = messagebox(DUMPFAILMESSAGE);
@@ -158,4 +254,6 @@ void mainmenu(){
         launch_payload("atmosphere/reboot_payload.bin", 0);
         launch_payload("bootloader/update.bin", 0);
         reboot_rcm();
+
+    */
 }

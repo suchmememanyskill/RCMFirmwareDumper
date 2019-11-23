@@ -32,6 +32,7 @@
 #include "dump/main.h"
 #include "mem/minerva.h"
 #include "soc/bpmp.h"
+#include "dump/gfx.h"
 
 sdmmc_t sd_sdmmc;
 sdmmc_storage_t sd_storage;
@@ -176,9 +177,9 @@ void ipl_main()
     bpmp_clk_rate_set(BPMP_CLK_SUPER_BOOST);
 
     while (!sd_mount()){
-        messagebox("Please insert your sd card to contine!");
+        message("Please insert your sd card to contine!", COLOR_RED);
     }
     
-    mainmenu();
+    dumpmenu();
     sd_unmount();
 }

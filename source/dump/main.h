@@ -5,5 +5,11 @@
 #define DUMPFAILMESSAGE "Dump FAILED!\n\n\n\nPress power to reboot to RCM\n\nPress vol+ to reboot to\n    atmosphere/reboot_payload.bin\n\nPress vol- to reboot to bootloader/update.bin"
 #define BUFFSIZE 32768
 
-int messagebox(char *message);
-void mainmenu();
+typedef struct _menu_item {
+    char name[50];
+    u32 color;
+    short internal_function;
+    short property;
+} menu_item;
+
+void dumpmenu();
