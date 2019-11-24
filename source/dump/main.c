@@ -23,14 +23,6 @@ menu_item mainmenu[] = {
     {"Power off", COLOR_ORANGE, 5, 1}
 };
 
-menu_item exitmenu[] = {
-    {"[RESULT]", COLOR_WHITE, -1, 0},
-    {"Reboot to Hekate", COLOR_BLUE, 1, 1},
-    {"Reboot to Atmosphere", COLOR_BLUE, 2, 1},
-    {"Reboot to RCM", COLOR_ORANGE, 3, 1},
-    {"Power off", COLOR_ORANGE, 4, 1}
-};
-
 bool checkfile(char* path){
     FRESULT fr;
     FILINFO fno;
@@ -44,36 +36,13 @@ bool checkfile(char* path){
 }
 
 void fillmainmenu(){
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 6; i++)
         switch (mainmenu[i].internal_function){
             case 2:
                 if (!checkfile("/bootloader/update.bin"))
                     mainmenu[i].property = -1;
                 break;
             case 3:
-                if (!checkfile("/atmosphere/reboot_payload.bin"))
-                    mainmenu[i].property = -1;
-                break;
-        }
-}
-
-void fillexitmenu(bool passed){
-    if (passed){
-        strcpy(exitmenu[0].name, "Dump completed!\nDump is located in /Firmware\n\n");
-        exitmenu[0].color = COLOR_GREEN;
-    }
-    else {
-        strcpy(exitmenu[0].name, "Dump FAILED!\n\n");
-        exitmenu[0].color = COLOR_RED;
-    }
-
-    for (int i = 0; i < 4; i++)
-        switch (mainmenu[i].internal_function){
-            case 1:
-                if (!checkfile("/bootloader/update.bin"))
-                    mainmenu[i].property = -1;
-                break;
-            case 2:
                 if (!checkfile("/atmosphere/reboot_payload.bin"))
                     mainmenu[i].property = -1;
                 break;
@@ -186,49 +155,40 @@ void dumpmenu(){
 
     fillmainmenu();
 
-    ret = makemenu(mainmenu, 6);
+    while (1){
+        ret = makemenu(mainmenu, 6);
 
-    switch (ret){
-        case 1:
-            fillexitmenu(!dumpfirmware());
+        switch (ret){
+            case 1:
+                if(!dumpfirmware()){
+                    strcpy(mainmenu[0].name, "Dump completed!\nDump is located in /Firmware\n\n");
+                    mainmenu[0].color = COLOR_GREEN;
+                }
+                else {
+                    strcpy(mainmenu[0].name, "Dump FAILED!\n\n");
+                    mainmenu[0].color = COLOR_RED;
+                }
 
-            ret = makemenu(exitmenu, 5);
+                mainmenu[1].property = -1;
+                break;
 
-            bpmp_clk_rate_set(BPMP_CLK_NORMAL);
-
-            switch (ret){
-                case 1:
-                    launch_payload("bootloader/update.bin", 0);
-                    break;
-                case 2:
-                    launch_payload("atmosphere/reboot_payload.bin", 0);
-                    break;
-                case 3:
-                    reboot_rcm();
-                    break;
-                case 4:
-                    power_off();
-                    break;
-            }
-
-            break;
-        
-        case 2:
-            bpmp_clk_rate_set(BPMP_CLK_NORMAL);
-            launch_payload("bootloader/update.bin", 0);
-            break;
-        case 3:
-            bpmp_clk_rate_set(BPMP_CLK_NORMAL);
-            launch_payload("atmosphere/reboot_payload.bin", 0);
-            break;
-        case 4:
-            bpmp_clk_rate_set(BPMP_CLK_NORMAL);
-            reboot_rcm();
-            break;
-        case 5:
-            bpmp_clk_rate_set(BPMP_CLK_NORMAL);
-            power_off();
-            break;
+            case 2:
+                bpmp_clk_rate_set(BPMP_CLK_NORMAL);
+                launch_payload("bootloader/update.bin", 0);
+                break;
+            case 3:
+                bpmp_clk_rate_set(BPMP_CLK_NORMAL);
+                launch_payload("atmosphere/reboot_payload.bin", 0);
+                break;
+            case 4:
+                bpmp_clk_rate_set(BPMP_CLK_NORMAL);
+                reboot_rcm();
+                break;
+            case 5:
+                bpmp_clk_rate_set(BPMP_CLK_NORMAL);
+                power_off();
+                break;
+        }
     }
     /*
 
