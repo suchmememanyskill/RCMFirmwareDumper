@@ -38,6 +38,11 @@ typedef struct _pkg1_id_t
 	key_info_t key_info;
 } pkg1_id_t;
 
+#define HASH_ORDER_100_100 {2, 3, 4, 0, 5, 6, 1}
+#define HASH_ORDER_200_510 {2, 3, 4, 0, 5, 7, 10, 12, 11, 6, 8, 1}
+#define HASH_ORDER_600_620 {6, 5, 10, 7, 8, 2, 3, 4, 0, 12, 11, 1}
+#define HASH_ORDER_700_9xx {6, 5, 10, 7, 8, 2, 3, 4, 0, 12, 11, 9, 1}
+
 const pkg1_id_t *pkg1_identify(u8 *pkg1);
 
 #endif

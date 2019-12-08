@@ -27,6 +27,7 @@ extern bool sd_mount();
 extern void sd_unmount();
 static bool   _key_exists(const void *data) { return memcmp(data, zeros, 0x10); };
 static void   _generate_kek(u32 ks, const void *key_source, void *master_key, const void *kek_seed, const void *key_seed);
+const pkg1_id_t unknown = {"??????????????", 99, {0x00000,   0x0000, 0,  0, 00, HASH_ORDER_700_9xx, 0x0000, 0x00000} };
 
 sdmmc_storage_t storage;
 emmc_part_t *system_part;
@@ -102,10 +103,10 @@ int dump_biskeys(u8 bis_key[4][32]){
     u8 *pkg1 = (u8 *)malloc(0x40000);
     sdmmc_storage_set_mmc_partition(&storage, 1);
     sdmmc_storage_read(&storage, 0x100000 / NX_EMMC_BLOCKSIZE, 0x40000 / NX_EMMC_BLOCKSIZE, pkg1);
-    const pkg1_id_t *pkg1_id = pkg1_identify(pkg1);
+    pkg1_id_t *pkg1_id = pkg1_identify(pkg1);
     if (!pkg1_id) {
         EPRINTF("Unknown pkg1 version.");
-        return -1;
+        pkg1_id = &unknown;
     }
 
     bool found_tsec_fw = false;
